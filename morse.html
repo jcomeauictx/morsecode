@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Practice Morse Code</title>
+<meta charset="UTF-8">
+<style>
+</style>
+<script>
+var letters = {
+ a: ".-", b: "-...", c: "-.-.", d: "-..", e: ".",
+ f: "..-.", g: "--.", h: "....", i: "..", j: ".---",
+ k: "-.-", l: ".-..", m: "--", n: "-.", o: "---",
+ p: ".--.", q: "--.-", r: ".-.", s: "...", t: "-",
+ u: "..-", v: "...-", w: ".--", x: "-..-", y: "-.--", z: "--..",
+ 1: ".----", 2: "..---", 3: "...--", 4: "....-", 5: ".....",
+ 6: "-....", 7: "--...", 8: "---..", 9: "----.", 0: "-----"
+};
+var sounds = {}, ditlength = 100, dahlength = 300; // milliseconds
+sounds["."] = "dit";
+sounds["-"] = "dah";
+var times = {dit: ditlength, dah: dahlength};
+var elapsed = 0;  // time elapsed, used for sequencing
+// (Firefox needs an elapsed value of at least 100 to start, but fails at
+// reproducing the sounds consistently anyway)
+/*
+ random sentence generator adapted from http://pastehtml.com/view/1c0gckz.html
+ which is from http://stackoverflow.com/
+ questions/4708866/random-sentence-generation-in-javascript
+*/
+var subjects = ['I', 'You', 'Bob', 'John', 'General Washington',
+ 'The evil empire', 'Saddam Hussein', 'Kate', 'Martians', 'The opposition'];
+var verbs = ['will search for', 'will get', 'will find', 'attained', 'found',
+ 'will start interacting with', 'will accept', 'accepted', 'spurned', 'liked'];
+var objects=['Billy', 'a battle','weapons', 'treasure', 'a message',
+ 'girls', 'bad mojo', 'wood sprites', 'a cache of ammunition', 'birds'];
+var endings=['.', ', right?', ', like I said before.' , ', unfortunately.',
+ ', whichever comes first.', 'if conditions permit.', ', after you arrive.'];
+var sentence = "";
+function pickOne(list) {
+ var index = Math.floor(Math.random() * list.length);
+ return list[index];
+}
+function randomSentence(subjects, verbs, objects, endings) {
+ var sentence = pickOne(subjects) + " " + pickOne(verbs) + " " +
+  pickOne(objects);
+ var ending = pickOne(endings);
+ sentence += ending.substring(0, 1) == "," ? "" : " " + ending;
+ return sentence;
+}
+function playSound(sound, time) {
+ console.log("playing: " + sound + " at time " + time);
+ var sound = document.getElementById(sound);
+ sound.play();
+}
+function playLetter(letter) {
+ var morse = letters[letter];
+ console.log("playing letter: " + letter + ", " + morse);
+ for (var i = 0; i < morse.length; i++) {
+  var sound = sounds[morse[i]];
+  (function(sound, time) {
+   setTimeout(function() {
+    playSound(sound, time);
+   }, time);})(sound, elapsed);
+  elapsed += times[sound] + ditlength;
+ }
+ elapsed += dahlength;
+}
+function playWord(word) {
+ console.log("playing word: " + word);
+ for (var i = 0; i < word.length; i++) {
+  playLetter(word[i] in letters ? word[i] : "x");
+ }
+ elapsed += ditlength * 7;
+}
+function cleanup(text) {
+ var clean = text.toLowerCase().replace(/[^a-z\s]+/g, '');
+ console.log("clean text: " + clean);
+ return clean;
+}
+function playText(text) {
+ elapsed = 100;  // reset global
+ var words = cleanup(text).split(/\s+/);
+ for (var i = 0; i < words.length; i++) {
+  playWord(words[i]);
+ }
+ return false; // disable "submit" normal action
+}
+</script>
+</head>
+<body>
+<audio id="dit" preload="auto">
+ <source src="dit.wav">
+ <source src="dit.mp3">
+ <source src="dit.ogg">
+</audio>
+<audio id="dah" preload="auto">
+ <source src="dah.wav">
+ <source src="dah.mp3">
+ <source src="dah.ogg">
+</audio>
+<h1>Morse code practice</h1>
+<p>Only known to work under some versions of Google Chrome and Chromium.
+Make sure your sound is unmuted, as there is no visual indication when the
+beeps are being made.</p>
+<form>
+<h3>Listen to Morse code for words that you type</h3>
+Words: <input type="text" id="words">
+<input type="submit" id="convert" value="Convert">
+<input type="reset" value="Clear"><br>
+</form>
+<h3>Take transcription of a random sentence</h3>
+<form>
+<input type="submit" id="play" value="Play">
+<input type="submit" id="check" value="Check transcription">
+<input type="reset" value="Clear"><br>
+<textarea id="transcription" style="width: 20%;"></textarea>
+<textarea id="sentence" disabled style="width: 20%;"></textarea>
+</form>
+<script>
+document.getElementById("convert").onclick = function() {
+ // returns false to disable form submission
+ return playText(document.getElementById("words").value);
+};
+document.getElementById("play").onclick = function() {
+ // returns false to disable form submission
+ return playText(sentence = randomSentence(subjects, verbs, objects, endings));
+};
+document.getElementById("check").onclick = function() {
+ // returns false to disable form submission
+ document.getElementById("sentence").value = sentence; return false;
+};
+</script>
+</body>
+</html>
